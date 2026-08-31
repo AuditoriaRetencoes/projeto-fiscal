@@ -2,50 +2,210 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Gestão de Recuperación Manual - Auditoria Fiscal</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Recuperação Manual - Auditoria Fiscal</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyC3vI1544m13pueIBAe3NVKhnes8Se5FB0",
-        authDomain: "auditoria-fiscal-bfbd2.firebaseapp.com",
-        databaseURL: "https://auditoria-fiscal-bfbd2-default-rtdb.firebaseio.com",
-        projectId: "auditoria-fiscal-bfbd2",
-        storageBucket: "auditoria-fiscal-bfbd2.firebasestorage.app",
-        messagingSenderId: "699209529811",
-        appId: "1:699209529811:web:cd40a6e118139769599726"
-      };
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    </script>
-
     <style>
-        body { font-family: Arial, sans-serif; background-color: #0b0f19; color: #fff; margin: 0; padding: 30px; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b0f19;
+            color: #fff;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
         h1 { margin: 0; font-size: 24px; }
-        .subtitle { color: #9ca3af; margin: 5px 0 0 0; }
-        
-        .btn-action { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 14px;}
+
+        .subtitle {
+            color: #9ca3af;
+            margin: 5px 0 0 0;
+        }
+
+        .btn-action {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
         .btn-action:hover { background: #1d4ed8; }
 
-        .layout-grid { display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
-        .form-card, .charts-card { background: #111827; padding: 20px; border-radius: 10px; border: 1px solid #1f2937; }
-        
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 25px;
+        }
+
+        .form-card, .charts-card {
+            background: #111827;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #1f2937;
+        }
+
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: #9ca3af; margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 10px; background: #030712; border: 1px solid #374151; color: #fff; border-radius: 5px; box-sizing: border-box; }
-        
-        button.btn-save { background: #059669; color: white; width: 100%; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: #030712;
+            border: 1px solid #374151;
+            color: #fff;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .form-group select option {
+            background: #030712;
+            color: #fff;
+        }
+
+        button.btn-save {
+            background: #059669;
+            color: white;
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         button.btn-save:hover { background: #047857; }
 
-        .charts-container { display: flex; flex-direction: column; gap: 20px; }
-        .canvas-box { position: relative; height: 300px; width: 100%; background: #030712; padding: 15px; border-radius: 8px; border: 1px solid #1f2937; }
-        .canvas-box h3 { margin: 0 0 10px 0; font-size: 14px; color: #e5e7eb; }
+        button.btn-save:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .municipio-cadastro {
+            display: flex;
+            gap: 8px;
+        }
+
+        .municipio-cadastro input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .btn-cadastrar {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-cadastrar:hover {
+            background: #1d4ed8;
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .status.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .status.info {
+            display: block;
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+        }
+
+        .charts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .canvas-box {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            background: #030712;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+            box-sizing: border-box;
+        }
+
+        .canvas-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #e5e7eb;
+        }
+
+        @media (max-width: 900px) {
+            body { padding: 15px; }
+            .header-flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .layout-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
+
 <body>
 
     <div class="header-flex">
@@ -53,174 +213,438 @@
             <h1>Aba Administrativa: Recuperação Manual</h1>
             <p class="subtitle">Adicione e analise os valores recuperados de IRRF e ISSQN por município</p>
         </div>
+
         <a href="gerencial-painel.html" class="btn-action">← Voltar ao Painel Geral</a>
     </div>
 
     <div class="layout-grid">
-        <!-- Formulário de Lançamento Manual -->
+
+        <!-- FORMULÁRIO -->
         <div class="form-card">
             <h3>Novo Lançamento de Recuperação</h3>
+
+            <!-- 1º MUNICÍPIO: AGORA É LISTA SUSPENSA -->
+            <!-- CADASTRO MANUAL DE MUNICÍPIOS -->
             <div class="form-group" style="margin-top: 15px;">
-                <label>Município / Órgão:</label>
-                <input type="text" id="recMunicipio" placeholder="Ex: MUNICÍPIO DE PORTEIRINHA">
+                <label for="novoMunicipio">Cadastrar novo município:</label>
+                <div class="municipio-cadastro">
+                    <input type="text" id="novoMunicipio" placeholder="Ex: MUNICÍPIO DE PORTEIRINHA" autocomplete="off">
+                    <button type="button" class="btn-cadastrar" onclick="cadastrarMunicipio()">+ Cadastrar</button>
+                </div>
+                <div class="hint">Cadastre o município uma única vez. Ele ficará salvo neste computador e disponível na lista abaixo.</div>
             </div>
+
+            <!-- SELEÇÃO DO MUNICÍPIO -->
             <div class="form-group">
-                <label>Valor ISSQN Recuperado (R$):</label>
-                <input type="text" id="recIssqn" placeholder="0,00">
+                <label for="recMunicipio">Município / Órgão:</label>
+
+                <select id="recMunicipio" onchange="carregarMunicipioSelecionado()">
+                    <option value="">Carregando municípios...</option>
+                </select>
+
+                <div class="hint">Selecione um município já cadastrado.</div>
             </div>
+
+            <!-- 2º IRRF: PRIMEIRO -->
             <div class="form-group">
-                <label>Valor IRRF Recuperado (R$):</label>
-                <input type="text" id="recIrrf" placeholder="0,00">
+                <label for="recIrrf">Valor IRRF Recuperado (R$):</label>
+                <input
+                    type="text"
+                    id="recIrrf"
+                    value="R$ 0,00"
+                    inputmode="numeric"
+                    autocomplete="off"
+                >
+                <div class="hint">Digite somente os números. A máscara contábil será aplicada automaticamente.</div>
             </div>
-            <button class="btn-save" onclick="salvarRecuperacao()">Salvar Lançamento no Banco</button>
+
+            <!-- 3º ISSQN: SEGUNDO -->
+            <div class="form-group">
+                <label for="recIssqn">Valor ISSQN Recuperado (R$):</label>
+                <input
+                    type="text"
+                    id="recIssqn"
+                    value="R$ 0,00"
+                    inputmode="numeric"
+                    autocomplete="off"
+                >
+            </div>
+
+            <button class="btn-save" id="btnSalvar" onclick="salvarRecuperacao()">
+                Salvar / Atualizar
+            </button>
+
+            <div id="statusRecuperacao" class="status"></div>
         </div>
 
-        <!-- Área de Gráficos Analíticos de Recuperação -->
+        <!-- GRÁFICOS -->
         <div class="charts-card">
             <h3 style="margin-top: 0; margin-bottom: 20px;">Análise Gráfica de Recuperação</h3>
+
             <div class="charts-container">
+
                 <div class="canvas-box">
                     <h3>Recuperação por Município (ISSQN vs IRRF)</h3>
                     <canvas id="chartRecuperacaoMunicipio"></canvas>
                 </div>
+
                 <div class="canvas-box">
                     <h3>Comparativo Geral de Impostos Recuperados</h3>
                     <canvas id="chartComparativoImpostos"></canvas>
                 </div>
+
             </div>
         </div>
+
     </div>
 
     <script>
+        // ============================================================
+        // ARMAZENAMENTO LOCAL
+        // Os municípios e recuperações ficam salvos neste computador,
+        // no navegador, através do localStorage. Nenhum dado desta
+        // tela é enviado ao Firebase.
+        // ============================================================
+        const CHAVE_DADOS = 'auditoria_fiscal_recuperacoes_manuais_v3';
+        const CHAVE_MUNICIPIOS = 'auditoria_fiscal_municipios_recuperacao_v3';
+
         let recCharts = {};
 
-        function limparGraficosRec() {
-            Object.values(recCharts).forEach(c => c.destroy());
-            recCharts = {};
-        }
-
-        function converterParaFloat(val) {
-            if (!val) return 0;
-            let limpo = val.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
-            let num = parseFloat(limpo);
-            return isNaN(num) ? 0 : num;
-        }
-
-        async function salvarRecuperacao() {
-            let municipio = document.getElementById('recMunicipio').value.trim();
-            let issqn = converterParaFloat(document.getElementById('recIssqn').value);
-            let irrf = converterParaFloat(document.getElementById('recIrrf').value);
-
-            if (!municipio) {
-                alert("Por favor, preencha o nome do município.");
-                return;
-            }
-
-            const dbRef = firebase.database().ref('recuperacoes_manuais');
+        function lerLocal(chave, padrao) {
             try {
-                await dbRef.push({
-                    municipio: municipio.toUpperCase(),
-                    issqn: issqn,
-                    irrf: irrf,
-                    dataCriacao: new Date().toISOString()
-                });
-                alert("Dados de recuperação salvos com sucesso!");
-                document.getElementById('recMunicipio').value = '';
-                document.getElementById('recIssqn').value = '';
-                document.getElementById('recIrrf').value = '';
-                carregarDadosRecuperacao();
+                const bruto = localStorage.getItem(chave);
+                return bruto ? JSON.parse(bruto) : padrao;
             } catch (e) {
-                console.error("Erro ao salvar:", e);
-                alert("Erro ao gravar dados.");
+                console.error('Erro ao ler armazenamento local:', e);
+                return padrao;
             }
         }
 
-        async function carregarDadosRecuperacao() {
-            if (!window.firebase || !firebase.database) return;
-            const dbRef = firebase.database().ref('recuperacoes_manuais');
+        function salvarLocal(chave, dados) {
+            try {
+                localStorage.setItem(chave, JSON.stringify(dados));
+                return true;
+            } catch (e) {
+                console.error('Erro ao salvar no armazenamento local:', e);
+                return false;
+            }
+        }
 
-            dbRef.once('value', (snapshot) => {
-                const dados = snapshot.val();
-                limparGraficosRec();
-
-                if (!dados) return;
-
-                let municipiosMap = {};
-                let totalIssqnGeral = 0;
-                let totalIrrfGeral = 0;
-
-                Object.values(dados).forEach(item => {
-                    let mun = item.municipio;
-                    let vIss = item.issqn || 0;
-                    let vIrrf = item.irrf || 0;
-
-                    if (!municipiosMap[mun]) {
-                        municipiosMap[mun] = { issqn: 0, irrf: 0 };
-                    }
-                    municipiosMap[mun].issqn += vIss;
-                    municipiosMap[mun].irrf += vIrrf;
-
-                    totalIssqnGeral += vIss;
-                    totalIrrfGeral += vIrrf;
-                });
-
-                let labelsMun = Object.keys(municipiosMap);
-                let dadosIssqn = labelsMun.map(m => municipiosMap[m].issqn);
-                let dadosIrrf = labelsMun.map(m => municipiosMap[m].irrf);
-
-                Chart.defaults.color = '#9ca3af';
-                Chart.defaults.borderColor = '#1f2937';
-
-                // Gráfico 1: Município (Agrupado ISSQN e IRRF)
-                recCharts.mun = new Chart(document.getElementById('chartRecuperacaoMunicipio'), {
-                    type: 'bar',
-                    data: {
-                        labels: labelsMun,
-                        datasets: [
-                            { label: 'ISSQN (R$)', data: dadosIssqn, backgroundColor: '#3b82f6', borderRadius: 4 },
-                            { label: 'IRRF (R$)', data: dadosIrrf, backgroundColor: '#10b981', borderRadius: 4 }
-                        ]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { position: 'top' }, 
-                            datalabels: { 
-                                anchor: 'end', align: 'top', color: '#fff', font: { size: 9, weight: 'bold' },
-                                formatter: (val) => val > 0 ? 'R$ ' + val.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ''
-                            } 
-                        },
-                        scales: { y: { beginAtZero: true, grace: '20%' } }
-                    },
-                    plugins: [ChartDataLabels]
-                });
-
-                // Gráfico 2: Comparativo Geral Impostos Recuperados
-                recCharts.geral = new Chart(document.getElementById('chartComparativoImpostos'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['ISSQN Recuperado', 'IRRF Recuperado'],
-                        datasets: [{
-                            data: [totalIssqnGeral, totalIrrfGeral],
-                            backgroundColor: ['#3b82f6', '#10b981']
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' },
-                            datalabels: {
-                                color: '#fff', font: { weight: 'bold', size: 12 },
-                                formatter: (val) => 'R$ ' + val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-                            }
-                        }
-                    },
-                    plugins: [ChartDataLabels]
-                });
+        function aplicarMascaraContabil(input) {
+            let numeros = String(input.value || '').replace(/\D/g, '');
+            if (numeros === '') numeros = '0';
+            numeros = numeros.replace(/^0+(?=\d)/, '');
+            const valor = parseInt(numeros, 10) / 100;
+            input.value = valor.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             });
         }
 
-        window.onload = carregarDadosRecuperacao;
+        function valorDaMascara(input) {
+            const texto = String(input.value || '').replace(/\D/g, '');
+            return texto ? parseInt(texto, 10) / 100 : 0;
+        }
+
+        function preencherMascara(input, valor) {
+            input.value = Number(valor || 0).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        document.getElementById('recIrrf').addEventListener('input', function () {
+            aplicarMascaraContabil(this);
+        });
+
+        document.getElementById('recIssqn').addEventListener('input', function () {
+            aplicarMascaraContabil(this);
+        });
+
+        function normalizarMunicipio(valor) {
+            return String(valor || '')
+                .trim()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .toUpperCase();
+        }
+
+        function formatarMoeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function limparGraficosRec() {
+            Object.values(recCharts).forEach(chart => {
+                try { chart.destroy(); } catch (e) {}
+            });
+            recCharts = {};
+        }
+
+        function mostrarStatus(mensagem, tipo = 'info') {
+            const el = document.getElementById('statusRecuperacao');
+            el.textContent = mensagem;
+            el.className = 'status ' + tipo;
+        }
+
+        function preencherListaMunicipios() {
+            const select = document.getElementById('recMunicipio');
+            const municipios = lerLocal(CHAVE_MUNICIPIOS, []);
+            const recuperacoes = lerLocal(CHAVE_DADOS, {});
+
+            const mapa = {};
+
+            municipios.forEach(nome => {
+                const chave = normalizarMunicipio(nome);
+                if (chave) mapa[chave] = nome;
+            });
+
+            // Mantém municípios de registros antigos feitos nesta tela.
+            Object.values(recuperacoes).forEach(item => {
+                if (!item || !item.municipio) return;
+                const nome = String(item.municipio).trim().replace(/\s+/g, ' ').toUpperCase();
+                const chave = normalizarMunicipio(nome);
+                if (chave) mapa[chave] = nome;
+            });
+
+            const lista = Object.values(mapa).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const valorAtual = select.value;
+
+            select.innerHTML = '';
+            const primeira = document.createElement('option');
+            primeira.value = '';
+            primeira.textContent = lista.length ? 'Selecione o município...' : 'Nenhum município cadastrado';
+            select.appendChild(primeira);
+
+            lista.forEach(nome => {
+                const option = document.createElement('option');
+                option.value = nome;
+                option.textContent = nome;
+                select.appendChild(option);
+            });
+
+            if (lista.includes(valorAtual)) select.value = valorAtual;
+        }
+
+        function cadastrarMunicipio() {
+            const input = document.getElementById('novoMunicipio');
+            const nome = String(input.value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+
+            if (!nome) {
+                mostrarStatus('Digite o nome do município para cadastrar.', 'error');
+                input.focus();
+                return;
+            }
+
+            const lista = lerLocal(CHAVE_MUNICIPIOS, []);
+            const chave = normalizarMunicipio(nome);
+            const existe = lista.some(item => normalizarMunicipio(item) === chave);
+
+            if (!existe) {
+                lista.push(nome);
+                lista.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+                if (!salvarLocal(CHAVE_MUNICIPIOS, lista)) {
+                    mostrarStatus('Não foi possível salvar o município neste navegador.', 'error');
+                    return;
+                }
+            }
+
+            input.value = '';
+            preencherListaMunicipios();
+            document.getElementById('recMunicipio').value = nome;
+            carregarMunicipioSelecionado();
+
+            mostrarStatus(
+                existe ? `${nome} já estava cadastrado.` : `${nome} cadastrado com sucesso neste computador!`,
+                'success'
+            );
+        }
+
+        function encontrarRegistroMunicipio(dados, municipio) {
+            const alvo = normalizarMunicipio(municipio);
+            let encontrado = null;
+
+            Object.entries(dados || {}).forEach(([id, item]) => {
+                if (!item || normalizarMunicipio(item.municipio) !== alvo) return;
+                if (!encontrado || String(item.dataAtualizacao || item.dataCriacao || '') > String(encontrado.item.dataAtualizacao || encontrado.item.dataCriacao || '')) {
+                    encontrado = { id, item };
+                }
+            });
+
+            return encontrado;
+        }
+
+        function carregarMunicipioSelecionado() {
+            const municipio = document.getElementById('recMunicipio').value;
+            const dados = lerLocal(CHAVE_DADOS, {});
+
+            if (!municipio) {
+                preencherMascara(document.getElementById('recIrrf'), 0);
+                preencherMascara(document.getElementById('recIssqn'), 0);
+                return;
+            }
+
+            const encontrado = encontrarRegistroMunicipio(dados, municipio);
+
+            if (encontrado) {
+                preencherMascara(document.getElementById('recIrrf'), encontrado.item.irrf);
+                preencherMascara(document.getElementById('recIssqn'), encontrado.item.issqn);
+                mostrarStatus('Valores atuais carregados. Altere e clique em Salvar / Atualizar.', 'info');
+            } else {
+                preencherMascara(document.getElementById('recIrrf'), 0);
+                preencherMascara(document.getElementById('recIssqn'), 0);
+                mostrarStatus('Este município ainda não possui recuperação lançada.', 'info');
+            }
+        }
+
+        function salvarRecuperacao() {
+            const municipio = document.getElementById('recMunicipio').value;
+            const irrf = valorDaMascara(document.getElementById('recIrrf'));
+            const issqn = valorDaMascara(document.getElementById('recIssqn'));
+            const btn = document.getElementById('btnSalvar');
+
+            if (!municipio) {
+                mostrarStatus('Selecione um município antes de salvar.', 'error');
+                document.getElementById('recMunicipio').focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const dados = lerLocal(CHAVE_DADOS, {});
+                const alvo = normalizarMunicipio(municipio);
+
+                // Um único registro por município. O valor novo substitui o antigo.
+                Object.keys(dados).forEach(id => {
+                    if (dados[id] && normalizarMunicipio(dados[id].municipio) === alvo) {
+                        delete dados[id];
+                    }
+                });
+
+                const id = 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                const agora = new Date().toISOString();
+
+                dados[id] = {
+                    municipio: municipio.toUpperCase().replace(/\s+/g, ' '),
+                    municipioChave: alvo,
+                    irrf: irrf,
+                    issqn: issqn,
+                    dataCriacao: agora,
+                    dataAtualizacao: agora
+                };
+
+                if (!salvarLocal(CHAVE_DADOS, dados)) {
+                    throw new Error('Falha ao gravar no localStorage');
+                }
+
+                mostrarStatus(
+                    `Salvo neste computador: ${municipio} | IRRF ${formatarMoeda(irrf)} | ISSQN ${formatarMoeda(issqn)}`,
+                    'success'
+                );
+
+                carregarDadosRecuperacao();
+            } catch (erro) {
+                console.error(erro);
+                mostrarStatus('Não foi possível salvar. O armazenamento do navegador pode estar bloqueado ou cheio.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar / Atualizar';
+            }
+        }
+
+        function carregarDadosRecuperacao() {
+            const dados = lerLocal(CHAVE_DADOS, {});
+            preencherListaMunicipios();
+            limparGraficosRec();
+
+            const registros = {};
+            Object.values(dados).forEach(item => {
+                if (!item || !item.municipio) return;
+                const chave = normalizarMunicipio(item.municipio);
+                if (!registros[chave] || String(item.dataAtualizacao || '') > String(registros[chave].dataAtualizacao || '')) {
+                    registros[chave] = item;
+                }
+            });
+
+            const municipiosMap = {};
+            let totalIssqnGeral = 0;
+            let totalIrrfGeral = 0;
+
+            Object.values(registros).forEach(item => {
+                const mun = item.municipio;
+                const issqn = Number(item.issqn) || 0;
+                const irrf = Number(item.irrf) || 0;
+                municipiosMap[mun] = { issqn, irrf };
+                totalIssqnGeral += issqn;
+                totalIrrfGeral += irrf;
+            });
+
+            Chart.defaults.color = '#9ca3af';
+            Chart.defaults.borderColor = '#1f2937';
+
+            recCharts.mun = new Chart(document.getElementById('chartRecuperacaoMunicipio'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(municipiosMap),
+                    datasets: [
+                        { label: 'IRRF (R$)', data: Object.values(municipiosMap).map(v => v.irrf), backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'ISSQN (R$)', data: Object.values(municipiosMap).map(v => v.issqn), backgroundColor: '#3b82f6', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        datalabels: {
+                            anchor: 'end', align: 'top', color: '#fff', font: { size: 9, weight: 'bold' },
+                            formatter: val => val > 0 ? 'R$ ' + Number(val).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ''
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, grace: '20%' } }
+                },
+                plugins: [ChartDataLabels]
+            });
+
+            recCharts.geral = new Chart(document.getElementById('chartComparativoImpostos'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['IRRF Recuperado', 'ISSQN Recuperado'],
+                    datasets: [{ data: [totalIrrfGeral, totalIssqnGeral], backgroundColor: ['#10b981', '#3b82f6'] }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        datalabels: {
+                            color: '#fff', font: { weight: 'bold', size: 12 },
+                            formatter: val => formatarMoeda(val)
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        window.addEventListener('load', function () {
+            preencherMascara(document.getElementById('recIrrf'), 0);
+            preencherMascara(document.getElementById('recIssqn'), 0);
+            carregarDadosRecuperacao();
+        });
     </script>
+
 </body>
 </html>
