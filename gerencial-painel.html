@@ -847,6 +847,7 @@
                 Valores de Recuperação Manual por Município (ISSQN vs IRRF)
             </h3>
 
+            <p id="avisoRecuperacao" role="status" style="display:none;color:#fbbf24;font-size:13px;line-height:1.6;margin:0 0 12px"></p>
             <div class="canvas-container large">
                 <canvas id="chartRecuperacaoGeral"></canvas>
             </div>
@@ -1699,20 +1700,26 @@ async function carregarTudo() {
             .ref('movimento_fiscal');
 
 
-    const CHAVE_RECUPERACAO_LOCAL =
-        'auditoria_fiscal_recuperacoes_manuais_v3';
+    const dbRecuperacoes =
+        firebase.database().ref('recuperacoes_manuais');
 
 
     try {
 
         const [
             snapAud,
-            snapMov
+            snapMov,
+            resultadoRec
         ] = await Promise.all([
 
             dbAuditorias.once('value'),
 
-            dbMovimento.once('value')
+            dbMovimento.once('value'),
+
+            dbRecuperacoes.once('value').then(
+                snapshot => ({ dados: snapshot.val() || {}, erro: null }),
+                erro => ({ dados: {}, erro })
+            )
 
         ]);
 
@@ -1729,31 +1736,12 @@ async function carregarTudo() {
            RECUPERAÇÃO MANUAL
         */
 
-        let dadosRec = {};
+        const dadosRec = resultadoRec.dados;
+        const erroRecuperacao = resultadoRec.erro;
 
-
-        try {
-
-            const brutoRec =
-                localStorage.getItem(
-                    CHAVE_RECUPERACAO_LOCAL
-                );
-
-
-            dadosRec =
-                brutoRec
-                    ? JSON.parse(brutoRec)
-                    : {};
-
-        } catch (erroLocal) {
-
-            console.error(
-                'Erro ao ler recuperação local:',
-                erroLocal
-            );
-
+        if (erroRecuperacao) {
+            console.error('Erro ao ler recuperações do Firebase:', erroRecuperacao);
         }
-
 
         limparGraficos();
 
@@ -1792,47 +1780,31 @@ async function carregarTudo() {
         =====================================================
         */
 
-        if (dadosRec) {
+        const ultimosPorMunicipio = {};
 
-            Object.values(dadosRec)
-                .forEach(item => {
+        Object.entries(dadosRec || {}).forEach(([id, item]) => {
+            if (!item || !item.municipio) return;
+            const chave = normalizarTexto(item.municipio);
+            if (!chave) return;
 
-                    let mun =
-                        item.cliente ||
-                        item.municipio ||
-                        "GERAL";
+            const anterior = ultimosPorMunicipio[chave];
+            const dataAtual = String(item.dataAtualizacao || item.dataCriacao || '');
+            const dataAnterior = anterior
+                ? String(anterior.dataAtualizacao || anterior.dataCriacao || '')
+                : '';
 
+            if (!anterior || dataAtual > dataAnterior) {
+                ultimosPorMunicipio[chave] = item;
+            }
+        });
 
-                    if (!mapRecMun[mun]) {
-
-                        mapRecMun[mun] = {
-                            irrf: 0,
-                            issqn: 0
-                        };
-
-                    }
-
-
-                    mapRecMun[mun].irrf +=
-                        converterValorMonetario(
-                            item.irrf ||
-                            item.valorIRRF ||
-                            0
-                        );
-
-
-                    mapRecMun[mun].issqn +=
-                        converterValorMonetario(
-                            item.issqn ||
-                            item.valorISSQN ||
-                            item.iss ||
-                            0
-                        );
-
-                });
-
-        }
-
+        Object.values(ultimosPorMunicipio).forEach(item => {
+            const municipio = item.municipio;
+            mapRecMun[municipio] = {
+                irrf: converterValorMonetario(item.irrf ?? 0),
+                issqn: converterValorMonetario(item.issqn ?? 0)
+            };
+        });
 
         const filtroAtivoNorm =
             normalizarTexto(
@@ -2889,19 +2861,34 @@ async function carregarTudo() {
            =====================================================
         */
 
-        const recMunKeys =
-            Object.keys(
-                mapRecMun
-            );
+        // Recuperações consultadas diretamente do Firebase.
+        const todasChavesRec = Object.keys(mapRecMun);
+        const recMunKeys = municipioFiltroAtivo
+            ? todasChavesRec.filter(m => normalizarTexto(m) === filtroAtivoNorm)
+            : todasChavesRec;
 
+        const avisoRec = document.getElementById('avisoRecuperacao');
+        if (avisoRec) {
+            if (erroRecuperacao) {
+                avisoRec.style.display = 'block';
+                avisoRec.textContent = 'Não foi possível consultar as recuperações no Firebase. Verifique a conexão e as regras de acesso ao banco.';
+            } else if (!Object.keys(ultimosPorMunicipio).length) {
+                avisoRec.style.display = 'block';
+                avisoRec.textContent = 'Nenhum registro encontrado em recuperacoes_manuais no Firebase. Os dados antigos do navegador não foram apagados nem migrados.';
+            } else if (!recMunKeys.length) {
+                avisoRec.style.display = 'block';
+                avisoRec.textContent = 'Existem recuperações no Firebase, mas não há registro correspondente ao município selecionado.';
+            } else {
+                avisoRec.style.display = 'none';
+                avisoRec.textContent = '';
+            }
+        }
 
-        const ctxRec =
-            document
-                .getElementById(
-                    'chartRecuperacaoGeral'
-                )
-                .getContext('2d');
-
+        const ctxRec = document.getElementById('chartRecuperacaoGeral');
+        if (!ctxRec) {
+            console.error('Canvas chartRecuperacaoGeral não encontrado.');
+            return;
+        }
 
         chartsInstance.recuperacao =
             new Chart(
