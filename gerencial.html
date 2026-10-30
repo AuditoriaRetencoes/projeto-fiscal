@@ -32,7 +32,7 @@ h1{margin:0 0 5px}.subtitle{color:#9ca3af;margin:0 0 20px}.cards-container{displ
   <div class="card-stat"><h4>Municípios Atendidos</h4><div class="value" id="statMunicipios">0</div></div>
   <div class="card-stat"><h4>Total de Notas</h4><div class="value" id="statNotas">0</div></div>
 </div>
-<div class="container">
+<div class="container"><div class="card card-full"><h3>Competência dos relatórios</h3><p>Selecione o mês a que os PDFs se referem (não necessariamente o mês do upload).</p><input type="month" id="competenciaRelatorio" style="max-width:260px;background:#030712;color:white;padding:10px;border:1px solid #374151;border-radius:6px"><div class="info">O histórico é salvo por competência. Reimportar o mesmo mês substitui somente o resumo daquele mês; o painel atual continua exibindo o último relatório importado.</div></div>
   <div class="card">
     <h3>Detalhamento dos Dados Extraídos</h3>
     <pre id="jsonOutput">Aguardando o upload do relatório PDF...</pre>
@@ -53,6 +53,7 @@ h1{margin:0 0 5px}.subtitle{color:#9ca3af;margin:0 0 20px}.cards-container{displ
   </div>
 </div>
 <script>
+document.getElementById('competenciaRelatorio').value=new Date().toISOString().slice(0,7);
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 function normalizarMunicipio(nome){
@@ -250,7 +251,20 @@ async function substituirDadosNoRealtimeDatabase(dados){
   dados.forEach((item,index)=>{ objeto[String(index)]=item; });
 
   try{
-    await firebase.database().ref('auditorias_fiscais').set(objeto);
+    const competencia=document.getElementById('competenciaRelatorio').value;
+     if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(competencia)) throw Error('Selecione a competência (mês/ano) do relatório.');
+     const porMunicipio={};
+     for(const item of dados){
+       const municipio=normalizarMunicipio(String(item.cliente||item.municipio||'NÃO IDENTIFICADO'));
+       const t=porMunicipio[municipio]||(porMunicipio[municipio]={municipio,irrf:0,issqn:0,inss:0,ibs:0,cbs:0,notas:0});
+       const v=item.valoresRetidos||[];
+       for(const [campo,i] of [['irrf',0],['issqn',1],['inss',2],['cbs',3],['ibs',4]])t[campo]+=numeroBR(v[i]??item.impostos?.[campo]??0);
+       t.notas+=Number(item.notas)||0;
+     }
+     const resumo={competencia,atualizadoEm:new Date().toISOString(),municipios:porMunicipio};
+     const updates={auditorias_fiscais:objeto};
+     updates['historico_fiscal/retencoes/'+competencia]=resumo;
+     await firebase.database().ref().update(updates);
     // Confirma novamente a leitura do banco depois da gravação.
     const snapshot=await firebase.database().ref('auditorias_fiscais').once('value');
     atualizarCards(snapshot.val() || {});
