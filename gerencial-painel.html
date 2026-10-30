@@ -857,7 +857,8 @@
     </div>
 
 
-    <!-- MODAL -->
+    <section class="chart-card" id="historicoFiscalBloco" style="margin-bottom:24px"><h3>Evolução histórica mensal — retenções e recuperações</h3><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:18px"><label>De <input type="month" id="historicoInicio" style="display:block;background:#020617;color:white;border:1px solid #334155;padding:9px;border-radius:7px"></label><label>Até <input type="month" id="historicoFim" style="display:block;background:#020617;color:white;border:1px solid #334155;padding:9px;border-radius:7px"></label><button class="btn-action" id="btnAtualizarHistorico" type="button">Aplicar período</button></div><p id="historicoAviso" class="subtitle" style="margin-bottom:15px">Carregando histórico salvo...</p><div class="charts-grid-triple"><div class="chart-card"><h3>Retenções por imposto (R$)</h3><div class="canvas-container large"><canvas id="chartHistoricoRetencoes"></canvas></div><p id="historicoTendenciaRet" class="subtitle"></p></div><div class="chart-card"><h3>Recuperação manual (R$)</h3><div class="canvas-container large"><canvas id="chartHistoricoRecuperacoes"></canvas></div><p id="historicoTendenciaRec" class="subtitle"></p></div></div></section>
+<!-- MODAL -->
 
     <div id="secretModal">
 
@@ -3029,6 +3030,8 @@ async function carregarTudo() {
             );
 
 
+        atualizarHistoricoGraficos();
+
     }
 
     catch (erro) {
@@ -3064,12 +3067,37 @@ window.addEventListener(
 );
 
 
+
+/* Histórico independente: nunca substitui os cartões do relatório atual. */
+let historicoCache={retencoes:{},recuperacoes:{}};
+function historicoNumero(v){if(typeof v==='number')return Number.isFinite(v)?v:0;const s=String(v??'0').replace(/R\$/g,'').trim();return Number(s.includes(',')?s.replace(/\./g,'').replace(',','.'):s)||0}
+function tendenciaHistorico(valores){const v=valores.filter(x=>x!==null);if(v.length<2)return 'Aguardando pelo menos dois meses com dados.';const ant=v[v.length-2],atu=v[v.length-1],dif=atu-ant;const pct=ant?Math.abs(dif/ant*100).toFixed(1)+'%':'sem base percentual';return Math.abs(dif)<0.005?'Estável em relação ao mês anterior':dif>0?'Subiu '+pct+' em relação ao mês anterior':'Caiu '+pct+' em relação ao mês anterior'}
+function atualizarHistoricoGraficos(){
+ const ini=document.getElementById('historicoInicio').value,fim=document.getElementById('historicoFim').value;
+ const ret=historicoCache.retencoes||{},rec=historicoCache.recuperacoes||{};
+ const meses=[...new Set([...Object.keys(ret),...Object.keys(rec)])].filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)&&(!ini||m>=ini)&&(!fim||m<=fim)).sort();
+ const aviso=document.getElementById('historicoAviso');
+ if(ini&&fim&&ini>fim){aviso.textContent='O início do período não pode ser posterior ao fim.';return}
+ aviso.textContent=meses.length?'Meses disponíveis: '+meses.join(' · ')+'. Meses não registrados não são tratados como zero.':'Nenhum histórico salvo para o período. Os gráficos serão preenchidos a partir dos próximos lançamentos.';
+ const filtrado=normalizarTexto(municipioFiltroAtivo||'');
+ function valores(mes,tipo,campo){const item=(tipo==='ret'?ret:rec)[mes];if(!item)return null;const municipios=item.municipios||{};const lista=Object.values(municipios).filter(v=>v&&(!filtrado||normalizarTexto(v.municipio||'')===filtrado));if(!lista.length)return null;return lista.reduce((s,v)=>s+historicoNumero(v[campo]),0)}
+ const cores={irrf:'#f59e0b',issqn:'#10b981',inss:'#3b82f6',ibs:'#a78bfa',cbs:'#f472b6'};
+ function desenhar(id,chave,campos,tipo){if(chartsInstance[chave])chartsInstance[chave].destroy();chartsInstance[chave]=new Chart(document.getElementById(id),{type:'line',data:{labels:meses,datasets:campos.map(([campo,nome])=>({label:nome,data:meses.map(m=>valores(m,tipo,campo)),borderColor:cores[campo],backgroundColor:cores[campo],spanGaps:false,tension:.25,pointRadius:5,borderWidth:3}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}}},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.parsed.y===null?'sem dados':ctx.parsed.y.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}))}}}}});}
+ desenhar('chartHistoricoRetencoes','historicoRet',[['irrf','IRRF'],['issqn','ISSQN'],['inss','INSS'],['ibs','IBS'],['cbs','CBS']],'ret');
+ desenhar('chartHistoricoRecuperacoes','historicoRec',[['irrf','IRRF recuperado'],['issqn','ISSQN recuperado']],'rec');
+ document.getElementById('historicoTendenciaRet').textContent=['IRRF','ISSQN','INSS','IBS','CBS'].map(n=>n+': '+tendenciaHistorico(meses.map(m=>valores(m,'ret',n.toLowerCase())))).join(' | ');
+ document.getElementById('historicoTendenciaRec').textContent=['IRRF','ISSQN'].map(n=>n+': '+tendenciaHistorico(meses.map(m=>valores(m,'rec',n.toLowerCase())))).join(' | ');
+}
+async function carregarHistoricoFiscal(){try{const snap=await firebase.database().ref('historico_fiscal').once('value');historicoCache=snap.val()||{retencoes:{},recuperacoes:{}};atualizarHistoricoGraficos()}catch(e){document.getElementById('historicoAviso').textContent='Erro ao carregar histórico: '+e.message;console.error(e)}}
+document.getElementById('btnAtualizarHistorico').addEventListener('click',atualizarHistoricoGraficos);
+
 /* =========================================================
    INICIALIZAÇÃO
 ========================================================= */
 
 window.onload =
     function() {
+        carregarHistoricoFiscal();
 
         carregarTudo();
 
